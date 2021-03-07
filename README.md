@@ -1,7 +1,7 @@
-1. Huấn luyện
+1. Huấn luyện:
     Chạy câu lệnh sau: python3 train.py -load_weights weights -SGDR 1 -floyd -batchsize 512 -checkpoint 20 -epochs 5 -printevery 10 -max_strlen 100 -src_data 'data/vi-0203-no-augment-shuffle.txt' -trg_data 'data/bana-0203-no-augment-shuffle.txt' -src_lang vi -trg_lang en
     Lưu ý: Nếu huấn luyện lại từ đầu, bỏ tham số weights ra
-2. Dịch
+2. Dịch:
     python3 translate.py -load_weights weights -src_lang vi -trg_lang en
 
 3. Nếu chạy bằng colab, vui lòng chạy file run_train.ipynb để huấn luyện và file run_translate.ipynb để dịch.
