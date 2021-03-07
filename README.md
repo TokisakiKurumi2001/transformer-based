@@ -9,7 +9,7 @@
 # 3. Colab
     Nếu chạy bằng colab, vui lòng chạy file run_train.ipynb để huấn luyện và file run_translate.ipynb để dịch.
 
-# 4
+# 4.
     Nếu muốn dịch từng câu nhập vào, vui lòng comment hàm randomizeTranslate ở file translate.py và mở comment cho phần lặp bên dưới trong hàm main.
 
 Chi tiết các tham số tham khảo nguồn ở đây: https://github.com/SamLynnEvans/Transformer
