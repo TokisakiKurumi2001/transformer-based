@@ -5,7 +5,7 @@
     #Lưu ý: Nếu huấn luyện lại từ đầu, bỏ tham số weights ra
 # 2. Dịch
     python3 translate.py -load_weights weights -src_lang vi -trg_lang en
-
+    Lưu ý: Do dung lượng khá nặng nên không up lên git, mô hình đã được huấn luyện với dữ liệu hiện tại có thế sử dụng ở đây: https://drive.google.com/drive/folders/1hghsAbDj6ZSWzPJ7fJoasNfj1gvIqWol?usp=sharing
 # 3. Colab
     Nếu chạy bằng colab, vui lòng chạy file run_train.ipynb để huấn luyện và file run_translate.ipynb để dịch.
 
