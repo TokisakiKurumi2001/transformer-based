@@ -17,7 +17,7 @@ class tokenize(object):
         sentence = re.sub(r"\!+", "!", sentence)
         sentence = re.sub(r"\,+", ",", sentence)
         sentence = re.sub(r"\?+", "?", sentence)
-        sentence = sentence.lower()
+        # sentence = sentence.lower()
         # sentence je ne peux pas accepter ça.
         # tokens ['je', 'ne', 'peux', 'pas', 'accepter', 'ça', '.']
         # print("sentence", sentence)

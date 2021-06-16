@@ -1,6 +1,6 @@
 import pandas as pd
 import torchtext
-from torchtext import data
+from torchtext.legacy import data
 from Tokenize import tokenize
 from Batch import MyIterator, batch_size_fn
 import os
@@ -41,10 +41,11 @@ def create_fields(opt):
     if opt.load_weights is not None:
         try:
             print("loading presaved fields...")
+            print('opt.load_weights', opt.load_weights)
             SRC = pickle.load(open(f'{opt.load_weights}/SRC.pkl', 'rb'))
             TRG = pickle.load(open(f'{opt.load_weights}/TRG.pkl', 'rb'))
         except:
-            print("error opening SRC.pkl and TXT.pkl field files, please ensure they are in " + opt.load_weights + "/")
+            print("error opening SRC.pkl and TRG.pkl field files, please ensure they are in " + opt.load_weights + "/")
             quit()
         
     return(SRC, TRG)

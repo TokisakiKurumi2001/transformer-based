@@ -15,14 +15,17 @@ from nltk.corpus import wordnet
 from torch.autograd import Variable
 import re
 import random
+import nltk.translate.bleu_score as bleu
 
 def get_synonym(word, SRC):
-    syns = wordnet.synsets(word)
-    for s in syns:
-        for l in s.lemmas():
-            if SRC.vocab.stoi[l.name()] != 0:
-                return SRC.vocab.stoi[l.name()]
-            
+    try:
+      syns = wordnet.synsets(word)
+      for s in syns:
+          for l in s.lemmas():
+              if SRC.vocab.stoi[l.name()] != 0:
+                  return SRC.vocab.stoi[l.name()]
+    except:
+      print('Resource wordnet not found.')        
     return 0
 
 def multiple_replace(dict, text):
@@ -31,6 +34,31 @@ def multiple_replace(dict, text):
 
   # For each match, look-up corresponding value in dictionary
   return regex.sub(lambda mo: dict[mo.string[mo.start():mo.end()]], text) 
+
+def postProcessing(src_sentence, translate_sentence):
+    postProcessedSentence = translate_sentence
+    if translate_sentence.strip().__contains__('....'):
+        postProcessedSentence = translate_sentence.replace('....', '')
+    if translate_sentence.strip().__contains__('..'):
+        postProcessedSentence = translate_sentence.replace('..', '')
+    # # Eg: "Buổi sáng, tôi đang đi học" -> "bơgê, inh kung atung hok"
+    if len(src_sentence) > 0 and len(translate_sentence) > 0 and src_sentence[0].isupper() and not translate_sentence[0].isupper():
+        postProcessedSentence = postProcessedSentence[0].upper() + postProcessedSentence[1:]
+    if len(src_sentence) > 0 and len(translate_sentence) > 0 and src_sentence[0].isupper() and translate_sentence.startswith('\'') and not translate_sentence[1].isupper():
+        postProcessedSentence = '\'' + postProcessedSentence[1].upper() + postProcessedSentence[2:]
+
+    print('postProcessing', src_sentence, translate_sentence)
+    # Eg: "chắn" -> "Chơhning"
+    if len(src_sentence) > 0 and len(translate_sentence) > 0 and not src_sentence[0].isupper() and translate_sentence[0].isupper():
+        postProcessedSentence = postProcessedSentence[0].lower() + postProcessedSentence[1:]
+    if len(src_sentence) > 0 and len(translate_sentence) > 0 and not src_sentence[0].isupper() and translate_sentence.startswith('\'') and translate_sentence[1].isupper():
+        postProcessedSentence = '\'' + postProcessedSentence[1].lower() + postProcessedSentence[2:]
+    if not src_sentence.endswith('.') and translate_sentence.endswith('.'):
+        lt = len(translate_sentence)
+        postProcessedSentence = postProcessedSentence[:lt-1]
+    elif src_sentence.endswith('.') and not translate_sentence.endswith('.'):
+        postProcessedSentence += '.'
+    return postProcessedSentence
 
 def translate_sentence(sentence, model, opt, SRC, TRG):
     
@@ -51,17 +79,20 @@ def translate_sentence(sentence, model, opt, SRC, TRG):
     return  multiple_replace({' ?' : '?',' !':'!',' .':'.','\' ':'\'',' ,':','}, sentence)
 
 def translate(opt, model, SRC, TRG):
-    sentences = opt.text.lower().split('.')
+    sentences = opt.text.split('.')
     translated = []
 
     for sentence in sentences:
-        translated.append(translate_sentence(sentence + '.', model, opt, SRC, TRG).capitalize())
+        res = translate_sentence(sentence + '.', model, opt, SRC, TRG).capitalize()
+        res = postProcessing(src_sentence=sentence, translate_sentence=res)
+        translated.append(res)
 
     return (' '.join(translated))
 
+
 def randomizeTranslate(opt, model, SRC, TRG):
-    txtVi = "vi-0203-no-augment-shuffle.txt"
-    txtBana = "bana-0203-no-augment-shuffle.txt"
+    txtVi = "vi_0904_full_shuffle_test.txt"
+    txtBana = "bana_0904_full_shuffle_test.txt"
     txtViFile = open('data' + '/' + txtVi, encoding='utf-8', errors='ignore').read()
     txtBanaFile = open('data' + '/' + txtBana, encoding='utf-8', errors='ignore').read()
     splitsVi = txtViFile.split('\n')
@@ -84,12 +115,13 @@ def randomizeTranslate(opt, model, SRC, TRG):
         except:
             print('An exception occured')
         
-    with open('data' + '/test-sentences-vi.txt', 'w', encoding='utf-8') as f:
+    with open('test_result' + '/test-sentences-vi.txt', 'w', encoding='utf-8') as f:
         f.write(txtViNew)
-    with open('data' + '/test-sentences-bana.txt', 'w', encoding='utf-8') as f:
+    with open('test_result' + '/test-sentences-bana.txt', 'w', encoding='utf-8') as f:
         f.write(txtBanaTranslated)
-    with open('data' + '/truth-sentences-bana.txt', 'w', encoding='utf-8') as f:
+    with open('test_result' + '/truth-sentences-bana.txt', 'w', encoding='utf-8') as f:
         f.write(txtBanaNew)
+
 
 def main():
     
@@ -115,13 +147,21 @@ def main():
 
     SRC, TRG = create_fields(opt)
     model = get_model(opt, len(SRC.vocab), len(TRG.vocab))
-    randomizeTranslate(opt, model, SRC, TRG)
-    # while True:
-    #     opt.text =input("Nhập một câu để dịch: (nhập 'q' để thoát):\n")
-    #     if opt.text=="q":
-    #         break
-    #     phrase = translate(opt, model, SRC, TRG)
-    #     print('> '+ phrase + '\n')
+    # randomizeTranslate(opt, model, SRC, TRG)
+    
+    while True:
+        opt.text =input("Enter a sentence to translate (type 'f' to load from file, or 'q' to quit):\n")
+        if opt.text=="q":
+            break
+        if opt.text=='f':
+            fpath =input("Enter a sentence to translate (type 'f' to load from file, or 'q' to quit):\n")
+            try:
+                opt.text = ' '.join(open(opt.text, encoding='utf-8').read().split('\n'))
+            except:
+                print("error opening or reading text file")
+                continue
+        phrase = translate(opt, model, SRC, TRG)
+        print('> '+ phrase + '\n')
 
 if __name__ == '__main__':
     main()
